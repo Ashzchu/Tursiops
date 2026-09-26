@@ -9,13 +9,37 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": ["onStartupFinished"],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "Tursiops.helloWorld",
-        "title": "Hello World"
+        "command": "Tursiops.explainFile",
+        "title": "Tursiops: Explain Current File"
+      },
+      {
+        "command": "Tursiops.showMemory",
+        "title": "Tursiops: Show File Memory"
+      },
+      {
+        "command": "Tursiops.clearFileMemory",
+        "title": "Tursiops: Clear File Memory"
+      },
+      {
+        "command": "Tursiops.askForChange",
+        "title": "Tursiops: Ask for Change"
+      },
+      {
+        "command": "Tursiops.reviewChange",
+        "title": "Tursiops: Review Pending Change"
+      },
+      {
+        "command": "Tursiops.setGeminiKey",
+        "title": "Tursiops: Set Gemini API Key"
+      },
+      {
+        "command": "Tursiops.clearGeminiKey",
+        "title": "Tursiops: Clear Gemini API Key"
       }
     ]
   },
@@ -33,6 +57,10 @@
     "lint": "eslint src",
     "test": "vscode-test"
   },
+  "dependencies": {
+    "zod": "^3.23.8",
+    "diff": "^8.0.4"
+  },
   "devDependencies": {
     "@types/vscode": "^1.138.0",
     "@types/mocha": "^10.0.10",
@@ -46,7 +74,6 @@
     "@vscode/test-electron": "^3.0.0"
   },
   "overrides": {
-    "diff": "^8.0.4",
     "serialize-javascript": "^7.0.6"
   }
 }
