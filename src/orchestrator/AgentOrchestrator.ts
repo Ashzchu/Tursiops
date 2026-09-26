@@ -11,8 +11,16 @@ import { runLint } from '../validation/LintRunner';
 import { runTypeCheck } from '../validation/TestRunner';
 import { log, logError, showChannel } from '../utils/logging';
 import { ValidationResult } from '../validation/ValidationResult';
+import { AgentResponse } from '../ai/AiSchemas';
 
 export const MAX_CORRECTION_ATTEMPTS = 3;
+
+/** Optional callbacks for streaming progress into a UI panel. */
+export interface OrchestratorUICallbacks {
+  onGeminiResponse?: (response: AgentResponse, attempt: number) => void;
+  onValidationResult?: (typeCheck: ValidationResult, lint: ValidationResult) => void;
+  onChangeDecision?: (decision: 'approved' | 'rejected', summary: string) => void;
+}
 
 export interface OrchestratorOptions {
   activeFileUri: vscode.Uri;
@@ -27,6 +35,7 @@ export interface OrchestratorOptions {
   memoryStore: MemoryStore;
   workspaceRoot: string;
   relatedFiles?: Array<{ path: string; content: string }>;
+  uiCallbacks?: OrchestratorUICallbacks;
 }
 
 export class AgentOrchestrator {
@@ -35,6 +44,7 @@ export class AgentOrchestrator {
       activeFileUri, activeFilePath, language, originalContent,
       memory, fileId, userPrompt, geminiProvider, workflowState,
       memoryStore, workspaceRoot, relatedFiles = [],
+      uiCallbacks = {},
     } = options;
 
     let currentContent = originalContent;
@@ -68,6 +78,7 @@ export class AgentOrchestrator {
       }
 
       log(`Gemini response received (confidence: ${response.confidence})`);
+      uiCallbacks.onGeminiResponse?.(response, attempt);
 
       try {
         validateChange(response, activeFileUri.fsPath);
@@ -85,6 +96,7 @@ export class AgentOrchestrator {
       workflowState.pendingOriginalContent = currentContent;
 
       const decision = await showDiff(parsed.originalContent, parsed.proposedContent, activeFileUri.fsPath);
+      uiCallbacks.onChangeDecision?.(decision, parsed.summary);
 
       if (decision === 'rejected') {
         vscode.window.showInformationMessage('Tursiops: Change rejected — file unchanged.');
@@ -110,6 +122,7 @@ export class AgentOrchestrator {
       ]);
 
       const allPassed = typeCheckResult.passed && lintResult.passed;
+      uiCallbacks.onValidationResult?.(typeCheckResult, lintResult);
 
       const validationEvent: MemoryEvent = {
         timestamp: new Date().toISOString(),

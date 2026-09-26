@@ -9,9 +9,29 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "tursiops",
+          "title": "Tursiops",
+          "icon": "icons/tursiops.svg"
+        }
+      ]
+    },
+    "views": {
+      "tursiops": [
+        {
+          "type": "webview",
+          "id": "tursiops.sidebarView",
+          "name": "Tursiops"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "Tursiops.explainFile",
@@ -40,8 +60,41 @@
       {
         "command": "Tursiops.clearGeminiKey",
         "title": "Tursiops: Clear Gemini API Key"
+      },
+      {
+        "command": "Tursiops.openMemoryPanel",
+        "title": "Tursiops: Open Memory Panel"
+      },
+      {
+        "command": "Tursiops.openAskPanel",
+        "title": "Tursiops: Open Ask Panel"
+      },
+      {
+        "command": "tursiops.openSidebar",
+        "title": "Tursiops: Show Sidebar"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "Tursiops.openMemoryPanel",
+          "when": "view == tursiops.sidebarView",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "Tursiops.askForChange",
+          "when": "editorIsOpen",
+          "group": "tursiops"
+        },
+        {
+          "command": "Tursiops.explainFile",
+          "when": "editorIsOpen",
+          "group": "tursiops"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
@@ -53,25 +106,26 @@
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "check-types": "tsc --noEmit",
+    "check-types": "tsc --noEmit && tsc --noEmit -p tsconfig.webview.json",
     "lint": "eslint src",
     "test": "vscode-test"
   },
   "dependencies": {
-    "zod": "^3.23.8",
-    "diff": "^8.0.4"
+    "diff": "^8.0.4",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/vscode": "^1.138.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "24.x",
-    "typescript-eslint": "^8.61.1",
-    "eslint": "^10.5.0",
+    "@types/vscode": "^1.138.0",
+    "@vscode/codicons": "^0.0.46-24",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.0.0",
     "esbuild": "^0.28.1",
+    "eslint": "^10.5.0",
     "npm-run-all": "^4.1.5",
     "typescript": "^6.0.3",
-    "@vscode/test-cli": "^0.0.15",
-    "@vscode/test-electron": "^3.0.0"
+    "typescript-eslint": "^8.61.1"
   },
   "overrides": {
     "serialize-javascript": "^7.0.6"

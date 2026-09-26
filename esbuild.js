@@ -24,10 +24,9 @@ const esbuildProblemMatcherPlugin = {
 };
 
 async function main() {
-	const ctx = await esbuild.context({
-		entryPoints: [
-			'src/extension.ts'
-		],
+	// ── Extension host bundle ────────────────────────────────────────────────
+	const extCtx = await esbuild.context({
+		entryPoints: ['src/extension.ts'],
 		bundle: true,
 		format: 'cjs',
 		minify: production,
@@ -37,16 +36,39 @@ async function main() {
 		outfile: 'dist/extension.js',
 		external: ['vscode'],
 		logLevel: 'silent',
-		plugins: [
-			/* add to the end of plugins array */
-			esbuildProblemMatcherPlugin,
-		],
+		plugins: [esbuildProblemMatcherPlugin],
 	});
+
+	// ── Webview bundles (browser environment) ────────────────────────────────
+	const webviewCtx = await esbuild.context({
+		entryPoints: [
+			{ in: 'src/ui/webviews/sidebar/sidebar.ts',  out: 'sidebar' },
+			{ in: 'src/ui/webviews/memory/memory.ts',    out: 'memory' },
+			{ in: 'src/ui/webviews/ask/ask.ts',          out: 'ask' },
+			{ in: 'src/ui/webviews/sidebar/sidebar.css', out: 'sidebar' },
+			{ in: 'src/ui/webviews/memory/memory.css',   out: 'memory' },
+			{ in: 'src/ui/webviews/ask/ask.css',         out: 'ask' },
+		],
+		bundle: true,
+		format: 'iife',
+		minify: production,
+		sourcemap: !production,
+		sourcesContent: false,
+		platform: 'browser',
+		outdir: 'dist/webviews',
+		loader: { '.css': 'css' },
+		logLevel: 'silent',
+		plugins: [esbuildProblemMatcherPlugin],
+	});
+
 	if (watch) {
-		await ctx.watch();
+		await extCtx.watch();
+		await webviewCtx.watch();
 	} else {
-		await ctx.rebuild();
-		await ctx.dispose();
+		await extCtx.rebuild();
+		await extCtx.dispose();
+		await webviewCtx.rebuild();
+		await webviewCtx.dispose();
 	}
 }
 
