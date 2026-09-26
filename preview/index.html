@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tursiops UI Preview</title>
+<style>
+/* ── Page chrome ────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #1e1e1e; font-family: -apple-system, "Segoe UI", sans-serif; }
+
+.page {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 32px;
+  padding: 40px 24px;
+  min-height: 100vh;
+}
+.panel-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+.panel-label {
+  color: #6e7681;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ── VS Code variable overrides ──────────────────────────────────────────── */
+:root {
+  --vscode-font-family: -apple-system, "Segoe UI", sans-serif;
+  --vscode-font-size: 13px;
+  --vscode-foreground: #cccccc;
+  --vscode-descriptionForeground: #8b949e;
+  --vscode-sideBar-background: #252526;
+  --vscode-editor-background: #1e1e1e;
+  --vscode-widget-border: rgba(127,127,127,0.25);
+  --vscode-input-background: #3c3c3c;
+  --vscode-input-foreground: #cccccc;
+  --vscode-input-border: rgba(127,127,127,0.35);
+  --vscode-input-placeholderForeground: #6e7681;
+  --vscode-button-background: #0e639c;
+  --vscode-button-foreground: #ffffff;
+  --vscode-button-hoverBackground: #1177bb;
+  --vscode-button-secondaryBackground: #3a3d41;
+  --vscode-button-secondaryForeground: #cccccc;
+  --vscode-badge-background: #4d4d4d;
+  --vscode-badge-foreground: #cccccc;
+  --vscode-focusBorder: #007fd4;
+  --vscode-toolbar-hoverBackground: rgba(90,93,94,0.31);
+  --vscode-scrollbarSlider-background: rgba(121,121,121,0.4);
+  --vscode-textLink-foreground: #3794ff;
+  --vscode-textBlockQuote-background: rgba(127,127,127,0.1);
+  --vscode-textBlockQuote-border: #a78bfa;
+  --vscode-inputValidation-infoBackground: rgba(59,130,212,0.1);
+  --vscode-inputValidation-infoBorder: rgba(59,130,212,0.3);
+  --vscode-list-hoverBackground: rgba(90,93,94,0.31);
+  --vscode-sideBarTitle-foreground: #bbbbbb;
+  --vscode-sideBarSectionHeader-foreground: #bbbbbb;
+}
+
+/* ── Sidebar frame ───────────────────────────────────────────────────────── */
+.sidebar-frame {
+  width: 300px;
+  height: 620px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  background: var(--vscode-sideBar-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+}
+
+/* ── SIDEBAR CSS (inlined from sidebar.css) ──────────────────────────────── */
+.layout { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.top-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--vscode-widget-border);
+  flex-shrink: 0; min-height: 32px;
+}
+.file-chip {
+  flex: 1; min-width: 0; font-size: 11px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: flex; align-items: center; gap: 5px;
+  color: var(--vscode-foreground);
+}
+.file-chip.muted { color: var(--vscode-descriptionForeground); font-weight: 400; }
+.top-right { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.top-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--vscode-descriptionForeground);
+  padding: 3px 5px; border-radius: 4px;
+  display: flex; align-items: center; gap: 3px; font-size: 14px;
+}
+.top-btn:hover { background: var(--vscode-toolbar-hoverBackground); color: var(--vscode-foreground); }
+.badge {
+  font-size: 10px; background: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground); border-radius: 8px;
+  padding: 0 5px; min-width: 16px; text-align: center; line-height: 16px;
+}
+.messages {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  display: flex; flex-direction: column; gap: 2px; padding: 8px 0 4px;
+}
+.messages::-webkit-scrollbar { width: 4px; }
+.messages::-webkit-scrollbar-thumb { background: var(--vscode-scrollbarSlider-background); border-radius: 2px; }
+.welcome {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 28px 16px 16px; text-align: center; gap: 8px; flex: 1;
+}
+.welcome-logo { color: var(--vscode-foreground); opacity: 0.7; margin-bottom: 4px; }
+.welcome-title { font-size: 16px; font-weight: 600; color: var(--vscode-foreground); line-height: 1.3; }
+.welcome-sub { font-size: 12px; color: var(--vscode-descriptionForeground); line-height: 1.5; max-width: 220px; }
+.setup-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--vscode-widget-border);
+  border-radius: 6px; cursor: pointer;
+  background: var(--vscode-editor-background);
+  width: 100%; text-align: left; margin-top: 8px;
+}
+.setup-card:hover { border-color: var(--vscode-focusBorder); }
+.setup-card strong { font-size: 12px; display: block; margin-bottom: 1px; }
+.setup-card p { font-size: 11px; color: var(--vscode-descriptionForeground); margin: 0; }
+.setup-card > div { flex: 1; min-width: 0; }
+.setup-card.dimmed { opacity: 0.5; cursor: default; }
+.suggestions { display: flex; flex-direction: column; gap: 5px; width: 100%; margin-top: 12px; }
+.suggestion-btn {
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-widget-border);
+  border-radius: 5px; padding: 7px 12px; font-size: 12px;
+  color: var(--vscode-foreground); cursor: pointer;
+  text-align: left; font-family: inherit;
+}
+.suggestion-btn:hover { background: var(--vscode-list-hoverBackground); border-color: var(--vscode-focusBorder); }
+.msg { display: flex; gap: 8px; padding: 6px 12px; line-height: 1.5; }
+.msg-user { justify-content: flex-end; }
+.msg-user .msg-text {
+  background: var(--vscode-inputValidation-infoBackground);
+  border: 1px solid var(--vscode-inputValidation-infoBorder);
+  border-radius: 12px 12px 3px 12px;
+  padding: 8px 12px; font-size: 12px; max-width: 92%; word-break: break-word;
+}
+.msg-agent { align-items: flex-start; }
+.msg-avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--vscode-badge-background); color: var(--vscode-badge-foreground);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0; margin-top: 1px;
+}
+.msg-avatar.t { background: var(--vscode-button-background); }
+.agent-t { font-size: 12px; font-weight: 700; color: var(--vscode-button-foreground); }
+.msg-body { flex: 1; min-width: 0; }
+.msg-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--vscode-descriptionForeground); margin-bottom: 3px;
+}
+.msg-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+.confidence { font-size: 10px; color: var(--vscode-descriptionForeground); }
+.msg-text { font-size: 12px; color: var(--vscode-foreground); word-break: break-word; }
+.msg-thinking { font-size: 12px; color: var(--vscode-descriptionForeground); font-style: italic; }
+.resp-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.resp-tag {
+  font-size: 10px; padding: 1px 6px; border-radius: 10px;
+  background: var(--vscode-badge-background); color: var(--vscode-badge-foreground);
+}
+.decision-row { display: flex; gap: 6px; margin-top: 10px; }
+.btn-approve {
+  background: rgba(34,197,94,0.12); color: #22c55e;
+  border: 1px solid rgba(34,197,94,0.3);
+  padding: 4px 14px; border-radius: 4px; cursor: pointer;
+  font-size: 12px; font-family: inherit; display: flex; align-items: center; gap: 4px;
+}
+.btn-approve:hover { background: rgba(34,197,94,0.22); }
+.btn-reject {
+  background: rgba(239,68,68,0.08); color: #ef4444;
+  border: 1px solid rgba(239,68,68,0.22);
+  padding: 4px 14px; border-radius: 4px; cursor: pointer;
+  font-size: 12px; font-family: inherit; display: flex; align-items: center; gap: 4px;
+}
+.btn-reject:hover { background: rgba(239,68,68,0.18); }
+.msg-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; padding: 4px 12px 4px 14px;
+  border-radius: 4px; margin: 2px 12px;
+}
+.msg-status.approved { background: rgba(34,197,94,0.1); color: #22c55e; }
+.msg-status.rejected { background: rgba(127,127,127,0.1); color: var(--vscode-descriptionForeground); }
+.msg-status.validated { background: rgba(34,197,94,0.1); color: #22c55e; }
+.input-bar {
+  flex-shrink: 0; padding: 8px 10px 10px;
+  border-top: 1px solid var(--vscode-widget-border);
+  background: var(--vscode-sideBar-background);
+}
+.input-wrap {
+  display: flex; align-items: flex-end;
+  border: 1px solid var(--vscode-input-border);
+  border-radius: 6px; background: var(--vscode-input-background);
+  overflow: hidden;
+}
+.input-wrap:focus-within { border-color: var(--vscode-focusBorder); }
+.prompt-input {
+  flex: 1; padding: 8px 10px;
+  background: transparent; border: none; outline: none;
+  color: var(--vscode-input-foreground);
+  font-family: var(--vscode-font-family); font-size: 12px;
+  resize: none; min-height: 36px; max-height: 120px;
+  overflow-y: auto; line-height: 1.45;
+}
+.prompt-input::placeholder { color: var(--vscode-input-placeholderForeground); }
+.input-actions { padding: 4px 4px 4px 0; display: flex; align-items: flex-end; }
+.send-btn {
+  background: var(--vscode-button-background); color: var(--vscode-button-foreground);
+  border: none; border-radius: 4px; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 16px; flex-shrink: 0;
+}
+.send-btn:hover { background: var(--vscode-button-hoverBackground); }
+.input-footer {
+  display: flex; align-items: center; gap: 5px;
+  margin-top: 5px; font-size: 10px; color: var(--vscode-descriptionForeground);
+}
+.provider-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.provider-dot.ok   { background: #22c55e; }
+.provider-dot.warn { background: #f59e0b; }
+.provider-dot.off  { background: var(--vscode-descriptionForeground); opacity: 0.4; }
+.provider-label { font-size: 10px; }
+.sep { opacity: 0.4; }
+
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { display: inline-block; animation: spin 1s linear infinite; }
+
+/* ── Tab switcher for preview ────────────────────────────────────────────── */
+.tabs { display: flex; gap: 8px; margin-bottom: 6px; }
+.tab {
+  background: #3a3d41; border: 1px solid rgba(255,255,255,0.08);
+  color: #8b949e; border-radius: 4px; padding: 4px 12px;
+  font-size: 11px; cursor: pointer; font-family: inherit;
+}
+.tab.active { background: #0e639c; color: #fff; border-color: #0e639c; }
+.view { display: none; }
+.view.active { display: block; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── View 1: Welcome / empty state ──────────────────────────────────── -->
+  <div class="panel-wrap">
+    <div class="tabs">
+      <button class="tab active" onclick="showTab(this,'welcome')">Welcome</button>
+      <button class="tab" onclick="showTab(this,'chat')">Chat</button>
+      <button class="tab" onclick="showTab(this,'thinking')">Thinking</button>
+      <button class="tab" onclick="showTab(this,'response')">Response</button>
+    </div>
+    <div class="panel-label">Tursiops Sidebar</div>
+    <div class="sidebar-frame">
+
+      <!-- WELCOME VIEW -->
+      <div id="welcome" class="view active" style="display:flex;flex-direction:column;height:100%;">
+        <div class="layout">
+          <div class="top-bar">
+            <span class="file-chip muted">📄 No file open</span>
+            <div class="top-right">
+              <button class="top-btn" title="Settings">⚙</button>
+            </div>
+          </div>
+          <div class="messages">
+            <div class="welcome">
+              <div class="welcome-logo">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                  <path fill="currentColor" d="M12 2C7.03 2 3 5.36 3 9.5c0 2.06.9 3.93 2.36 5.3L4 20l5.5-2.5c.8.2 1.63.3 2.5.3 4.97 0 9-3.36 9-7.5S16.97 2 12 2zm0 13c-.72 0-1.42-.08-2.08-.24l-.52-.12-3.27 1.49.75-2.9-.38-.4C5.55 11.98 5 10.78 5 9.5 5 6.46 8.13 4 12 4s7 2.46 7 5.5-3.13 5.5-7 5.5z"/>
+                  <circle cx="9" cy="9.5" r="1" fill="currentColor"/>
+                  <circle cx="12" cy="9.5" r="1" fill="currentColor"/>
+                  <circle cx="15" cy="9.5" r="1" fill="currentColor"/>
+                </svg>
+              </div>
+              <h2 class="welcome-title">What can I do for you?</h2>
+              <p class="welcome-sub">Tursiops edits your code, remembers context, and validates changes.</p>
+              <p style="font-size:11px;color:var(--vscode-descriptionForeground);margin-top:4px;">Open a file in the editor to get started.</p>
+              <div class="setup-card" style="margin-top:16px;">
+                <span style="font-size:16px;">🔑</span>
+                <div>
+                  <strong>Set Gemini API key</strong>
+                  <p>Required to ask for code changes</p>
+                </div>
+                <span style="color:var(--vscode-descriptionForeground);font-size:14px;">›</span>
+              </div>
+              <div class="setup-card dimmed" style="margin-top:6px;">
+                <span style="font-size:16px;">🖥</span>
+                <div>
+                  <strong>Qwen offline</strong>
+                  <p>Start Ollama for local summarisation</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="input-bar">
+            <div class="input-wrap disabled">
+              <textarea class="prompt-input" placeholder="Open a file to get started…" disabled rows="1"></textarea>
+              <div class="input-actions">
+                <button class="send-btn" disabled>➤</button>
+              </div>
+            </div>
+            <div class="input-footer">
+              <span class="provider-dot warn"></span>
+              <span class="provider-label">Gemini key not set</span>
+              <span class="sep">·</span>
+              <span class="provider-dot off"></span>
+              <span class="provider-label">Qwen offline</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAT VIEW (with suggestions, file open) -->
+      <div id="chat" class="view" style="display:none;flex-direction:column;height:100%;">
+        <div class="layout">
+          <div class="top-bar">
+            <span class="file-chip">📄 GeminiProvider.ts</span>
+            <div class="top-right">
+              <button class="top-btn" title="Memory">🧠 <span class="badge">4</span></button>
+              <button class="top-btn" title="Settings">⚙</button>
+            </div>
+          </div>
+          <div class="messages">
+            <div class="welcome">
+              <div class="welcome-logo">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                  <path fill="currentColor" d="M12 2C7.03 2 3 5.36 3 9.5c0 2.06.9 3.93 2.36 5.3L4 20l5.5-2.5c.8.2 1.63.3 2.5.3 4.97 0 9-3.36 9-7.5S16.97 2 12 2zm0 13c-.72 0-1.42-.08-2.08-.24l-.52-.12-3.27 1.49.75-2.9-.38-.4C5.55 11.98 5 10.78 5 9.5 5 6.46 8.13 4 12 4s7 2.46 7 5.5-3.13 5.5-7 5.5z"/>
+                  <circle cx="9" cy="9.5" r="1" fill="currentColor"/>
+                  <circle cx="12" cy="9.5" r="1" fill="currentColor"/>
+                  <circle cx="15" cy="9.5" r="1" fill="currentColor"/>
+                </svg>
+              </div>
+              <h2 class="welcome-title">What can I do for you?</h2>
+              <p class="welcome-sub">Tursiops edits your code, remembers context, and validates changes.</p>
+              <div class="suggestions">
+                <button class="suggestion-btn">Explain this file</button>
+                <button class="suggestion-btn">Add input validation</button>
+                <button class="suggestion-btn">Refactor for readability</button>
+                <button class="suggestion-btn">Add error handling</button>
+              </div>
+            </div>
+          </div>
+          <div class="input-bar">
+            <div class="input-wrap">
+              <textarea class="prompt-input" placeholder="Type your task here…" rows="1"></textarea>
+              <div class="input-actions">
+                <button class="send-btn">➤</button>
+              </div>
+            </div>
+            <div class="input-footer">
+              <span class="provider-dot ok"></span>
+              <span class="provider-label">Gemini ready</span>
+              <span class="sep">·</span>
+              <span class="provider-dot off"></span>
+              <span class="provider-label">Qwen offline</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- THINKING VIEW -->
+      <div id="thinking" class="view" style="display:none;flex-direction:column;height:100%;">
+        <div class="layout">
+          <div class="top-bar">
+            <span class="file-chip">📄 GeminiProvider.ts</span>
+            <div class="top-right">
+              <button class="top-btn">🧠 <span class="badge">4</span></button>
+              <button class="top-btn">⚙</button>
+            </div>
+          </div>
+          <div class="messages">
+            <div class="msg msg-user">
+              <div class="msg-text">Add retry logic with exponential backoff to the Gemini API call</div>
+            </div>
+            <div class="msg msg-agent">
+              <div class="msg-avatar t"><span class="agent-t">T</span></div>
+              <div class="msg-body">
+                <div class="msg-label">Tursiops</div>
+                <div class="msg-thinking"><span class="spin">⟳</span>&nbsp; Thinking…</div>
+              </div>
+            </div>
+          </div>
+          <div class="input-bar">
+            <div class="input-wrap disabled">
+              <textarea class="prompt-input" placeholder="Waiting for response…" disabled rows="1"></textarea>
+              <div class="input-actions">
+                <button class="send-btn" disabled style="opacity:0.4;">➤</button>
+              </div>
+            </div>
+            <div class="input-footer">
+              <span class="provider-dot ok"></span>
+              <span class="provider-label">Gemini ready</span>
+              <span class="sep">·</span>
+              <span class="provider-dot off"></span>
+              <span class="provider-label">Qwen offline</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESPONSE VIEW -->
+      <div id="response" class="view" style="display:none;flex-direction:column;height:100%;">
+        <div class="layout">
+          <div class="top-bar">
+            <span class="file-chip">📄 GeminiProvider.ts</span>
+            <div class="top-right">
+              <button class="top-btn">🧠 <span class="badge">5</span></button>
+              <button class="top-btn">⚙</button>
+            </div>
+          </div>
+          <div class="messages" style="overflow-y:auto;">
+            <div class="msg msg-user">
+              <div class="msg-text">Add retry logic with exponential backoff to the Gemini API call</div>
+            </div>
+            <div class="msg msg-agent">
+              <div class="msg-avatar t"><span class="agent-t">T</span></div>
+              <div class="msg-body">
+                <div class="msg-label-row">
+                  <span class="msg-label">Tursiops</span>
+                  <span class="confidence">92% confident</span>
+                </div>
+                <div class="msg-text">Added <code style="background:#3c3c3c;padding:1px 4px;border-radius:3px;font-size:11px;">retryWithBackoff()</code> helper with 3 attempts, doubling delay from 1s. Wraps the <code style="background:#3c3c3c;padding:1px 4px;border-radius:3px;font-size:11px;">fetch</code> call and re-throws on non-retriable errors.</div>
+                <div class="resp-tags">
+                  <span class="resp-tag">retry logic</span>
+                  <span class="resp-tag">exponential backoff</span>
+                  <span class="resp-tag">GeminiProvider.test.ts</span>
+                </div>
+                <div class="decision-row">
+                  <button class="btn-approve">✓ Approve</button>
+                  <button class="btn-reject">✕ Reject</button>
+                </div>
+              </div>
+            </div>
+            <div class="msg-status approved">✓ Applied — retry logic added</div>
+            <div class="msg-status validated">✓ Validation passed</div>
+          </div>
+          <div class="input-bar">
+            <div class="input-wrap">
+              <textarea class="prompt-input" placeholder="Type your task here…" rows="1"></textarea>
+              <div class="input-actions">
+                <button class="send-btn">➤</button>
+              </div>
+            </div>
+            <div class="input-footer">
+              <span class="provider-dot ok"></span>
+              <span class="provider-label">Gemini ready</span>
+              <span class="sep">·</span>
+              <span class="provider-dot off"></span>
+              <span class="provider-label">Qwen offline</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /sidebar-frame -->
+  </div><!-- /panel-wrap -->
+
+</div><!-- /page -->
+
+<script>
+function showTab(btn, id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v => { v.style.display = 'none'; v.classList.remove('active'); });
+  btn.classList.add('active');
+  const el = document.getElementById(id);
+  el.style.display = 'flex';
+  el.classList.add('active');
+}
+
+// Auto-resize textareas
+document.querySelectorAll('.prompt-input').forEach(ta => {
+  ta.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  });
+});
+</script>
+</body>
+</html>
