@@ -9,6 +9,7 @@ const API_BASE      = 'https://tursiops-web.vercel.app';
 const TOKEN_KEY     = 'tursiops.authToken';
 const EMAIL_KEY     = 'tursiops.authEmail';
 const GEMINI_KEY    = 'tursiops.geminiKey';
+const LAST_VIEW_KEY = 'tursiops.lastActiveView';
 
 // ---------------------------------------------------------------------------
 // Shared SVG — user's 309752.svg with #2596D9→#3B82F6 gradient
@@ -222,6 +223,9 @@ class TursiopsViewProvider implements vscode.WebviewViewProvider {
           await this._ctx.globalState.update(GEMINI_KEY, undefined);
           this._render();
           break;
+        case 'save-active-view':
+          await this._ctx.globalState.update(LAST_VIEW_KEY, msg.view);
+          break;
         case 'signout':
           await this._handleSignOut();
           break;
@@ -234,11 +238,18 @@ class TursiopsViewProvider implements vscode.WebviewViewProvider {
             const entry = await PM.addPrompt(msg.mode, msg.prompt, geminiKey);
             PM.generateContextSummary();
             this._view?.webview.postMessage({ command: 'pm-added', mode: msg.mode, entry });
+            const allChanges = CT.loadAllChanges();
+            this._view?.webview.postMessage({ command: 'cs-data', changes: allChanges });
             // Capture workspace diff for MiniGit after every prompt, then refresh panel
-            CT.captureChange(entry.refined, geminiKey)
+            CT.captureChange(entry.index, entry.refined, geminiKey, () => {
+              const changes = CT.loadAllChanges();
+              this._view?.webview.postMessage({ command: 'mg-data', changes });
+              this._view?.webview.postMessage({ command: 'cs-data', changes });
+            })
               .then(() => {
                 const changes = CT.loadAllChanges();
                 this._view?.webview.postMessage({ command: 'mg-data', changes });
+                this._view?.webview.postMessage({ command: 'cs-data', changes });
               })
               .catch(() => {/* non-fatal */});
           } catch (e) {
@@ -284,20 +295,27 @@ class TursiopsViewProvider implements vscode.WebviewViewProvider {
           break;
         }
         // ── Change Summary (fn3) ───────────────────────────────────────
-        case 'cs-load-commits': {
-          const commits = CT.gitCommitList();
-          this._view?.webview.postMessage({ command: 'cs-commits', commits });
-          break;
-        }
-        case 'cs-summarise': {
+        case 'cs-summarize-prompt': {
           const geminiKey = this._ctx.globalState.get<string>(GEMINI_KEY) ?? '';
           try {
-            this._view?.webview.postMessage({ command: 'cs-loading' });
-            const summary = await CT.summariseBetweenCommits(msg.hashA, msg.hashB, geminiKey);
-            this._view?.webview.postMessage({ command: 'cs-result', summary });
+            const summary = await CT.summarizeChangeFileOnDemand(msg.index, geminiKey);
+            this._view?.webview.postMessage({
+              command: 'cs-prompt-summary-result',
+              index: msg.index,
+              summary
+            });
           } catch (e) {
-            this._view?.webview.postMessage({ command: 'cs-error', message: String(e) });
+            this._view?.webview.postMessage({
+              command: 'cs-prompt-summary-result',
+              index: msg.index,
+              summary: 'Error generating summary: ' + String(e)
+            });
           }
+          break;
+        }
+        case 'cs-load-changes': {
+          const changes = CT.loadAllChanges();
+          this._view?.webview.postMessage({ command: 'cs-data', changes });
           break;
         }
         // ── MiniGit (fn4) ──────────────────────────────────────────────
@@ -400,7 +418,8 @@ class TursiopsViewProvider implements vscode.WebviewViewProvider {
     } else if (!geminiKey) {
       this._view.webview.html = getGeminiKeyHtml(email);
     } else {
-      this._view.webview.html = getMainHtml(email, geminiKey);
+      const lastActiveView = this._ctx.globalState.get<string>(LAST_VIEW_KEY) || 'pm';
+      this._view.webview.html = getMainHtml(email, geminiKey, lastActiveView);
     }
   }
 
@@ -606,7 +625,7 @@ function getGeminiKeyHtml(email: string): string {
 // ---------------------------------------------------------------------------
 // SCREEN 3 — Main dashboard
 // ---------------------------------------------------------------------------
-function getMainHtml(email: string, geminiKey: string): string {
+function getMainHtml(email: string, geminiKey: string, initialView: string = 'pm'): string {
   const nonce     = getNonce();
   const initial   = email ? email[0].toUpperCase() : 'T';
   const maskedKey = geminiKey.slice(0, 6) + '••••••••••••' + geminiKey.slice(-4);
@@ -860,6 +879,34 @@ function getMainHtml(email: string, geminiKey: string): string {
     }
     .nav-empty-icon { font-size: 24px; display: block; margin-bottom: 8px; }
 
+    
+    .cs-timeline-item {
+      position: relative; margin-bottom: 12px;
+      background: #0c1a2e; border: 1px solid #1a3050;
+      border-radius: 8px; padding: 10px 12px;
+      transition: border-color 0.15s; cursor: pointer;
+    }
+    .cs-timeline-item:hover { border-color: #2596D9; }
+    .cs-timeline-item.active { border-color: #2596D9; background: #0f223d; }
+    .cs-item-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .cs-item-num { font-size: 11px; font-weight: 700; color: #2596D9; }
+    .cs-item-time { font-size: 9.5px; color: #3d6494; }
+    .cs-item-prompt {
+      font-size: 11.5px; color: #cfe2ff; font-weight: 500;
+      line-height: 1.4; margin-bottom: 6px;
+    }
+    .cs-item-toggle-hint {
+      font-size: 10px; color: #38bdf8; display: flex; align-items: center; gap: 4px;
+    }
+    .cs-summary-content {
+      margin-top: 8px; padding-top: 8px; border-top: 1px solid #1a3050;
+      font-size: 11.5px; color: #94a3b8; line-height: 1.6; white-space: pre-wrap;
+    }
+    .cs-summary-content strong { color: #f1f5f9; }
+
     /* ── Change Summary panel ─────────────────────── */
     .cs-row {
       display: flex; gap: 8px; margin-bottom: 10px;
@@ -997,7 +1044,7 @@ function getMainHtml(email: string, geminiKey: string): string {
   <div class="panel-wrap">
 
     <!-- Prompt Memory -->
-    <div class="panel active" id="panel-pm">
+    <div class="panel ${initialView === 'pm' ? 'active' : ''}" id="panel-pm">
       <!-- Mode toggle -->
       <div class="pm-toggle">
         <button class="pm-toggle-btn active" id="btn-remember">🧠 Remember this</button>
@@ -1029,7 +1076,7 @@ function getMainHtml(email: string, geminiKey: string): string {
     </div>
 
     <!-- Navigator -->
-    <div class="panel" id="panel-nav">
+    <div class="panel ${initialView === 'nav' ? 'active' : ''}" id="panel-nav">
       <div class="nav-input-row">
         <input class="nav-input" id="nav-input" type="text"
           placeholder="Find auth file, database utils, login screen…" autocomplete="off"/>
@@ -1050,38 +1097,21 @@ function getMainHtml(email: string, geminiKey: string): string {
     </div>
 
     <!-- Change Summary -->
-    <div class="panel" id="panel-cs">
-      <div class="cs-row">
-        <div class="cs-field">
-          <label class="cs-label">From commit</label>
-          <select class="cs-select" id="cs-from"></select>
-        </div>
-        <div class="cs-field">
-          <label class="cs-label">To commit</label>
-          <select class="cs-select" id="cs-to"></select>
-        </div>
+    <div class="panel ${initialView === 'cs' ? 'active' : ''}" id="panel-cs">
+      <div class="timeline-header">
+        <span class="tl-label">Prompt Changes Timeline</span>
       </div>
-      <button class="cs-btn" id="cs-summarise-btn">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-        </svg>
-        Summarise with Gemini
-      </button>
-      <div class="cs-result-wrap" id="cs-result-wrap" style="display:none">
-        <div class="cs-result-label">
-          <span>Summary</span>
+      <div class="timeline" id="cs-timeline">
+        <div class="tl-empty" id="cs-empty">
+          <span style="font-size:20px;display:block;margin-bottom:6px">📝</span>
+          No prompt changes recorded yet.<br/>
+          Submit a prompt in Prompt Memory to start tracking.
         </div>
-        <div class="cs-result-body" id="cs-result-body"></div>
-      </div>
-      <div class="cs-empty" id="cs-empty">
-        <span class="cs-empty-icon">📝</span>
-        Select two commits above and click<br/>Summarise to see what changed.
       </div>
     </div>
 
     <!-- MiniGit -->
-    <div class="panel" id="panel-mg">
+    <div class="panel ${initialView === 'mg' ? 'active' : ''}" id="panel-mg">
       <div class="mg-info">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;color:#2596D9">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -1129,6 +1159,12 @@ function getMainHtml(email: string, geminiKey: string): string {
       });
       const target = panels[fnSelect.value];
       if (target) { document.getElementById(target).classList.add('active'); }
+      vscode.postMessage({ command: 'save-active-view', view: fnSelect.value });
+      if (fnSelect.value === 'cs') {
+        vscode.postMessage({ command: 'cs-load-changes' });
+      } else if (fnSelect.value === 'mg') {
+        vscode.postMessage({ command: 'mg-load' });
+      }
     });
 
     // ── Mode toggle ────────────────────────────────────
@@ -1320,44 +1356,76 @@ function getMainHtml(email: string, geminiKey: string): string {
           break;
 
         // ── Change Summary ──────────────────────────────
-        case 'cs-commits': {
-          const fromSel = document.getElementById('cs-from');
-          const toSel   = document.getElementById('cs-to');
-          fromSel.innerHTML = '';
-          toSel.innerHTML   = '';
-          if (!msg.commits || msg.commits.length === 0) {
-            const opt = '<option value="">No git history found</option>';
-            fromSel.innerHTML = opt;
-            toSel.innerHTML   = opt;
+        case 'cs-prompt-summary-result': {
+          const item = document.querySelector('.cs-timeline-item[data-index="' + msg.index + '"]');
+          if (item) {
+            const body = item.querySelector('.cs-summary-content');
+            if (body) {
+              body.textContent = msg.summary;
+            }
+          }
+          break;
+        }
+        case 'cs-data': {
+          const container = document.getElementById('cs-timeline');
+          const emptyEl   = document.getElementById('cs-empty');
+          Array.from(container.querySelectorAll('.cs-timeline-item')).forEach(el => el.remove());
+
+          if (!msg.changes || msg.changes.length === 0) {
+            emptyEl.style.display = 'block';
             break;
           }
-          msg.commits.forEach((c, i) => {
-            const label = escHtml(c.hash.slice(0,7) + ' ' + c.message.slice(0,40));
-            fromSel.innerHTML += \`<option value="\${escHtml(c.hash)}" \${i === 1 ? 'selected' : ''}>\${label}</option>\`;
-            toSel.innerHTML   += \`<option value="\${escHtml(c.hash)}" \${i === 0 ? 'selected' : ''}>\${label}</option>\`;
+          emptyEl.style.display = 'none';
+
+          [...msg.changes].reverse().forEach(c => {
+            const item = document.createElement('div');
+            item.className = 'cs-timeline-item';
+            item.setAttribute('data-index', String(c.index));
+            const summaryText = c.summary || 'No summary recorded in change file.';
+
+            item.innerHTML = [
+              '<div class="tl-dot"></div>',
+              '<div class="cs-item-header">',
+                '<span class="cs-item-num">Prompt #' + c.index + '</span>',
+                '<span class="cs-item-time">' + escHtml(c.timestamp) + '</span>',
+              '</div>',
+              '<div class="cs-item-prompt">' + escHtml(c.prompt || ('Prompt #' + c.index)) + '</div>',
+              '<div class="cs-item-toggle-hint">',
+                '<span class="hint-arrow">▶</span>',
+                '<span class="hint-text">Show agent change summary</span>',
+              '</div>',
+              '<div class="cs-summary-content" style="display:none">' + escHtml(summaryText) + '</div>'
+            ].join('');
+
+            item.addEventListener('click', () => {
+              const body = item.querySelector('.cs-summary-content');
+              const arrow = item.querySelector('.hint-arrow');
+              const hintText = item.querySelector('.hint-text');
+              const isShowing = body.style.display !== 'none';
+
+              if (isShowing) {
+                body.style.display = 'none';
+                arrow.textContent = '▶';
+                hintText.textContent = 'Show agent change summary';
+                item.classList.remove('active');
+              } else {
+                body.style.display = 'block';
+                arrow.textContent = '▼';
+                hintText.textContent = 'Hide summary';
+                item.classList.add('active');
+
+                const txt = body.textContent || '';
+                const needsSummary = !txt || txt.includes('Could not generate') || txt.includes('No summary recorded') || txt.includes('Waiting for AI agent');
+
+                if (needsSummary) {
+                  body.innerHTML = '<div style="display:flex;align-items:center;gap:6px;color:#38bdf8"><div class="spinner"></div> Generating summary with Gemini...</div>';
+                  vscode.postMessage({ command: 'cs-summarize-prompt', index: c.index });
+                }
+              }
+            });
+
+            container.appendChild(item);
           });
-          break;
-        }
-        case 'cs-loading':
-          document.getElementById('cs-summarise-btn').disabled = true;
-          document.getElementById('cs-summarise-btn').innerHTML = '<div class="spinner"></div> Summarising…';
-          document.getElementById('cs-result-wrap').style.display = 'none';
-          document.getElementById('cs-empty').style.display = 'none';
-          break;
-        case 'cs-result': {
-          const btn = document.getElementById('cs-summarise-btn');
-          btn.disabled = false;
-          btn.innerHTML = \`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Summarise with Gemini\`;
-          document.getElementById('cs-result-body').textContent = msg.summary;
-          document.getElementById('cs-result-wrap').style.display = 'block';
-          document.getElementById('cs-empty').style.display = 'none';
-          break;
-        }
-        case 'cs-error': {
-          const btn = document.getElementById('cs-summarise-btn');
-          btn.disabled = false;
-          btn.innerHTML = \`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Summarise with Gemini\`;
-          showToast(msg.message);
           break;
         }
 
@@ -1380,7 +1448,7 @@ function getMainHtml(email: string, geminiKey: string): string {
               <div class="mg-entry-header">
                 <span class="mg-num">#\${c.index}</span>
                 <span class="mg-time">\${escHtml(c.timestamp)}</span>
-                \${c.gitCommit ? \`<span class="mg-commit">\${escHtml(c.gitCommit.slice(0,12))}</span>\` : ''}
+                \${c.commit ? \`<span class="mg-commit">\${escHtml(c.commit.slice(0,12))}</span>\` : ''}
                 \${c.branch    ? \`<span class="mg-branch">\${escHtml(c.branch)}</span>\` : ''}
               </div>
               \${c.prompt ? \`<div class="mg-prompt">"\${escHtml(c.prompt)}"</div>\` : ''}
@@ -1417,16 +1485,11 @@ function getMainHtml(email: string, geminiKey: string): string {
     }
 
     // ── Change Summary: wire up summarise button ───────
-    document.getElementById('cs-summarise-btn').addEventListener('click', () => {
-      const hashA = document.getElementById('cs-from').value;
-      const hashB = document.getElementById('cs-to').value;
-      if (!hashA || !hashB) { showToast('Select two commits first.'); return; }
-      vscode.postMessage({ command: 'cs-summarise', hashA, hashB });
-    });
+    // Change Summary: timeline click handles expansion automatically
 
     // ── Init: load existing entries ────────────────────
     vscode.postMessage({ command: 'pm-load' });
-    vscode.postMessage({ command: 'cs-load-commits' });
+    vscode.postMessage({ command: 'cs-load-changes' });
     vscode.postMessage({ command: 'mg-load' });
   </script>
 </body></html>`;

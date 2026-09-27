@@ -59,8 +59,18 @@ function currentBranch(cwd: string): string {
 // ---------------------------------------------------------------------------
 // Gemini refinement
 // ---------------------------------------------------------------------------
+const FALLBACK_MODELS = [
+  'gemini-3.1-flash-lite',
+  'gemini-3.5-flash-lite',
+  'gemini-3.6-flash',
+  'gemini-3.8-flash',
+  'gemini-3.5-flash',
+  'gemini-flash-latest',
+  'gemini-2.5-flash',
+];
+
 export async function refinePrompt(raw: string, geminiKey: string): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(geminiKey)}`;
+  if (!geminiKey) { return raw; }
   const body = {
     contents: [{
       parts: [{
@@ -70,17 +80,24 @@ export async function refinePrompt(raw: string, geminiKey: string): Promise<stri
     generationConfig: { temperature: 0.3, maxOutputTokens: 512 },
   };
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) { return raw; } // fallback to original on error
-  const data = await res.json() as {
-    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-  };
-  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? raw;
+  for (const model of FALLBACK_MODELS) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(geminiKey)}`;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        const data = await res.json() as {
+          candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+        };
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (text) { return text; }
+      }
+    } catch {}
+  }
+  return raw;
 }
 
 // ---------------------------------------------------------------------------
