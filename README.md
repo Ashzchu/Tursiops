@@ -30,16 +30,3 @@ After every prompt submission a snapshot of your current git diff is saved to `.
 3. Paste your Gemini API key — it's validated live and stored securely
 4. Select a function from the dropdown and start working
 
-## Release Notes
-
-### 1.9.0
-Full stable release: all bug fixes integrated, publisher aligned to Conquestcore, stale extension ID suppressed via IBM Bob settings, old vsix artefacts cleaned, `.vscodeignore` updated. Fn3 commit dropdown, MiniGit live-refresh, and single git watcher all stable.
-
-### 1.8.0
-Stability release: all three core bug fixes fully integrated — Fn3 commit dropdown loads last 20 commits correctly, MiniGit panel live-refreshes after every prompt, single git watcher eliminates reset race condition on commit.
-
-### 1.7.0
-Bug fixes: Fn3 Change Summary commit dropdown now correctly loads all 20 commits. MiniGit panel auto-refreshes immediately after every prompt submission. Removed duplicate git commit watcher that caused race conditions on reset. Publisher aligned with Marketplace account.
-
-### 1.6.0
-Full release: Prompt Memory, Navigator, Change Summary, and MiniGit — all four functions complete with Gemini integration, git-aware file storage, and automatic memory reset on commit.
