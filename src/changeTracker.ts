@@ -293,6 +293,11 @@ export function resetOnCommit(): void {
   fs.writeFileSync(path.join(memDir, 'forget.md'),
     '# 🗑️ Prompt Memory — Forget\n\n> Auto-managed by Tursiops. Read by AI agent.\n\n*No prompts yet.*\n', 'utf8');
 
+  const ctx = path.join(root, 'CONTEXT.md');
+  if (fs.existsSync(ctx)) {
+    fs.unlinkSync(ctx);
+  }
+
   vscode.window.showInformationMessage('Tursiops: Commit detected — memory and changes reset for fresh session.');
 }
 

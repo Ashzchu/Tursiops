@@ -13,3 +13,5 @@ vsc-extension-quickstart.md
 **/*.ts
 **/.vscode-test.*
 *.vsix
+tursiops-web-audit-plan.md
+309752.svg

@@ -10,6 +10,11 @@
   "categories": [
     "Other"
   ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ashzchu/Tursiops.git"
+  },
   "activationEvents": [
     "onUri"
   ],
