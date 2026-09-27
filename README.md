@@ -1,71 +1,45 @@
-# Tursiops README
+# Tursiops
 
-This is the README for your extension "Tursiops". After writing up a brief description, we recommend including the following sections.
+**Project-aware memory & context companion for VS Code.**
+
+Tursiops sits in your Activity Bar and works alongside your AI coding agent to give it persistent memory, intelligent file navigation, and a full change history — all powered by your own Gemini API key.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### 🧠 Prompt Memory
+Remember or forget prompts across sessions. Tursiops uses Gemini to refine each prompt and stores it in `.tursiops/memory/` as a versioned timeline. Inline editing lets you tweak refined prompts at any time.
 
-For example if there is an image subfolder under your extension project workspace:
+### 🧭 Navigator
+Type a natural-language description ("find the auth utility", "where is the login screen?") and Gemini scans your workspace file inventory to return the most relevant files — click to open instantly.
 
-\!\[feature X\]\(images/feature-x.png\)
+### 📝 Change Summary
+Pick any two commits from your git history and get a Gemini-generated, file-by-file summary of exactly what changed between them.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+### 🌿 MiniGit
+After every prompt submission a snapshot of your current git diff is saved to `.tursiops/changes/change_N.md` with a Gemini summary. Give the file path to your IDE agent to revert any change at any time.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- A free [Google AI Studio](https://aistudio.google.com) Gemini API key
+- Git installed and a git repository open in your workspace
 
-## Extension Settings
+## Getting Started
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
+1. Click the **Tursiops** dolphin icon in the Activity Bar
+2. Sign in or create an account
+3. Paste your Gemini API key — it's validated live and stored securely
+4. Select a function from the dropdown and start working
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 1.9.0
+Full stable release: all bug fixes integrated, publisher aligned to Conquestcore, stale extension ID suppressed via IBM Bob settings, old vsix artefacts cleaned, `.vscodeignore` updated. Fn3 commit dropdown, MiniGit live-refresh, and single git watcher all stable.
 
-### 1.0.0
+### 1.8.0
+Stability release: all three core bug fixes fully integrated — Fn3 commit dropdown loads last 20 commits correctly, MiniGit panel live-refreshes after every prompt, single git watcher eliminates reset race condition on commit.
 
-Initial release of ...
+### 1.7.0
+Bug fixes: Fn3 Change Summary commit dropdown now correctly loads all 20 commits. MiniGit panel auto-refreshes immediately after every prompt submission. Removed duplicate git commit watcher that caused race conditions on reset. Publisher aligned with Marketplace account.
 
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+### 1.6.0
+Full release: Prompt Memory, Navigator, Change Summary, and MiniGit — all four functions complete with Gemini integration, git-aware file storage, and automatic memory reset on commit.
