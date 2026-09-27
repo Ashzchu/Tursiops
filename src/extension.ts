@@ -210,10 +210,10 @@ class TursiopsViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(async (msg) => {
       switch (msg.command) {
         case 'open-signin':
-          await vscode.env.openExternal(vscode.Uri.parse(`${API_BASE}?redirect=vscode&action=signin&ext=Conquestcore.tursiops-ai`));
+          await vscode.env.openExternal(vscode.Uri.parse(`${API_BASE}?redirect_uri=${encodeURIComponent('vscode://Conquestcore.tursiops-ai/auth')}&redirect=vscode&action=signin&ext=Conquestcore.tursiops-ai`));
           break;
         case 'open-signup':
-          await vscode.env.openExternal(vscode.Uri.parse(`${API_BASE}?redirect=vscode&action=signup&ext=Conquestcore.tursiops-ai`));
+          await vscode.env.openExternal(vscode.Uri.parse(`${API_BASE}?redirect_uri=${encodeURIComponent('vscode://Conquestcore.tursiops-ai/auth')}&redirect=vscode&action=signup&ext=Conquestcore.tursiops-ai`));
           break;
         case 'save-gemini-key':
           await this._handleSaveGeminiKey(msg.key);
@@ -1462,7 +1462,8 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.window.registerUriHandler({
       handleUri(uri: vscode.Uri): void {
-        if (uri.path !== '/auth') { return; }
+        const normalizedPath = uri.path.replace(/^\/+/, '');
+        if (normalizedPath !== 'auth') { return; }
         const params = new URLSearchParams(uri.query);
         const token  = params.get('token');
         const email  = params.get('email');
