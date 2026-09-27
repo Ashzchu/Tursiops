@@ -3,7 +3,7 @@
   "publisher": "Conquestcore",
   "displayName": "Tursiops AI",
   "description": "Tursiops is a VS Code extension that works alongside coding agents to provide persistent, file-specific memory and context. It captures agent commands and work summaries, stores context per file, filters relevant information, updates memory as code evolves, and offers a project-aware chat interface.",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "engines": {
     "vscode": "^1.126.0"
   },
@@ -11,7 +11,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:tursiops.panel",
+    "onView:conquestcore.tursiops-ai.panel",
     "onUri"
   ],
   "main": "./dist/extension.js",
@@ -19,17 +19,17 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "tursiops-sidebar",
+          "id": "conquestcore-tursiops-ai-sidebar",
           "title": "Tursiops",
           "icon": "media/tursiops-logo.svg"
         }
       ]
     },
     "views": {
-      "tursiops-sidebar": [
+      "conquestcore-tursiops-ai-sidebar": [
         {
           "type": "webview",
-          "id": "tursiops.panel",
+          "id": "conquestcore.tursiops-ai.panel",
           "name": "Tursiops",
           "icon": "media/tursiops-logo.svg"
         }

@@ -190,7 +190,7 @@ const BASE_CSS = `
 // Sidebar panel
 // ---------------------------------------------------------------------------
 class TursiopsViewProvider implements vscode.WebviewViewProvider {
-  static readonly viewId = 'tursiops.panel';
+  static readonly viewId = 'conquestcore.tursiops-ai.panel';
   private _view?: vscode.WebviewView;
 
   constructor(private readonly _ctx: vscode.ExtensionContext) {}
